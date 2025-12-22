@@ -19,30 +19,68 @@ window.onload = () => {
 // Search functionality
 document.getElementById('searchBtn').addEventListener('click', () => {
     const city = document.getElementById('cityInput').value.trim();
-    if (city) fetchByCity(city);
+    if (city) handleSearch(city);
 });
 
 // Allow Enter key to search
 document.getElementById('cityInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         const city = document.getElementById('cityInput').value.trim();
-        if (city) fetchByCity(city);
+        if (city) handleSearch(city);
     }
 });
 
+async function handleSearch(city) {
+    const btn = document.getElementById('searchBtn');
+    const originalContent = btn.innerHTML;
+
+    // 1. Show Loading State
+    btn.innerHTML = `<i data-lucide="loader-2" class="loading-spinner"></i>`;
+    lucide.createIcons(); // Render the new icon
+    btn.disabled = true;
+
+    try {
+        await fetchByCity(city);
+    } finally {
+        // 2. Reset Loading State (Always)
+        btn.innerHTML = originalContent;
+        lucide.createIcons(); // Restore original icon
+        btn.disabled = false;
+    }
+}
+
 async function fetchByCity(city) {
     try {
+        // Optimization: This call gets Current Weather AND Coords
         const res = await fetch(`${apiBaseUrl}/weather?q=${city}`);
-        const data = await res.json();
-        if (data.coord) {
-            fetchData(data.coord.lat, data.coord.lon);
-        } else {
-            console.error("City not found");
+        if (!res.ok) throw new Error('City not found');
+
+        const current = await res.json();
+
+        if (current.coord) {
+            // Optimization: Don't call fetchData() which fetches current weather again!
+            // Just fetch forecast now.
+            const lat = current.coord.lat;
+            const lon = current.coord.lon;
+
+            const foreRes = await fetch(`${apiBaseUrl}/forecast?lat=${lat}&lon=${lon}`);
+            const forecast = await foreRes.json();
+
+            // Update Global State
+            weatherData = current;
+            forecastData = forecast.list;
+
+            updateUI(current, forecast.list);
         }
     } catch (error) {
         console.error("Error fetching city data:", error);
+        alert("City not found. Please try again.");
     }
 }
+
+// Global Data Storage
+let weatherData = null;
+let forecastData = null;
 
 async function fetchData(lat, lon) {
     try {
@@ -54,6 +92,8 @@ async function fetchData(lat, lon) {
         const forecast = await foreRes.json();
 
         if (current && forecast && forecast.list) {
+            weatherData = current;
+            forecastData = forecast.list;
             updateUI(current, forecast.list);
         }
     } catch (error) {
@@ -110,6 +150,98 @@ function updateCitiesPage(current) {
         minute: '2-digit',
         hour12: true
     });
+
+    // Attach Hover Animation Logic
+    attachHoverEffect('temp-card', 'sun-overlay');
+    attachHoverEffect('humidity-card', 'humidity-overlay');
+    attachHoverEffect('sunrise-card', 'sunrise-overlay');
+    attachHoverEffect('sunset-card', 'sunset-overlay');
+}
+
+function attachHoverEffect(cardId, overlayId) {
+    const card = document.getElementById(cardId);
+    const overlay = document.getElementById(overlayId);
+
+    if (card && overlay) {
+        card.addEventListener('mouseenter', () => {
+            overlay.classList.add('active');
+        });
+        card.addEventListener('mouseleave', () => {
+            overlay.classList.remove('active');
+        });
+    }
+}
+
+function renderSunArc(sunrise, sunset) {
+    const canvas = document.getElementById('sunChart');
+    if (!canvas) return; // Guard clause
+    const ctx = canvas.getContext('2d');
+
+    // Set Canvas Size carefully for high DPI
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+
+    // CRITICAL FIX: If element is hidden, width/height are 0. Stop to avoid errors.
+    if (rect.width === 0 || rect.height === 0) return;
+
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = rect.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Arc Parameters
+    const centerX = w / 2;
+    const centerY = h - 20; // Bottom centered
+    const radius = Math.min(w, h) - 40;
+
+    if (radius <= 0) return; // Prevent negative radius error
+
+    // 1. Draw Dashed Background Arc (The Path)
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, Math.PI, 0); // Semicircle from PI to 0
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]); // Dotted effect
+    ctx.stroke();
+    ctx.setLineDash([]); // Reset
+
+    // 2. Calculate Current Sun Position
+    const now = Math.floor(Date.now() / 1000);
+
+    // Normalize time: 0 (Sunrise) to 1 (Sunset)
+    let percent = (now - sunrise) / (sunset - sunrise);
+    percent = Math.max(0, Math.min(1, percent)); // Clamp
+
+    // Valid Angle: PI (Left) -> 0 (Right)
+    const currentAngle = Math.PI - (percent * Math.PI);
+
+    // 3. Draw Filled Arc (Progress)
+    ctx.beginPath();
+    // Start at PI, end at currentAngle
+    ctx.arc(centerX, centerY, radius, Math.PI, currentAngle);
+    ctx.strokeStyle = '#facc15'; // Yellow
+    ctx.lineWidth = 4; // Slightly thicker
+    ctx.stroke();
+
+    // 4. Draw Sun Icon
+    const sunX = centerX + radius * Math.cos(currentAngle);
+    const sunY = centerY + radius * Math.sin(currentAngle);
+
+    // Glow
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 12, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(250, 204, 21, 0.3)'; // Yellow glow
+    ctx.fill();
+
+    // Solid Sun
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 6, 0, 2 * Math.PI);
+    ctx.fillStyle = '#facc15';
+    ctx.fill();
 }
 
 function updateLocationDisplay(current) {
@@ -148,6 +280,14 @@ function switchView(viewName) {
         citiesView.classList.remove('hidden');
         navWeather.classList.remove('active');
         navCities.classList.add('active');
+
+        // RE-RENDER FIX: Render charts when view becomes visible
+        if (weatherData) {
+            // Small timeout to ensure display:block has applied and layout is stable
+            setTimeout(() => {
+                renderSunArc(weatherData.sys.sunrise, weatherData.sys.sunset);
+            }, 50);
+        }
     }
 }
 

@@ -71,22 +71,22 @@
                     <p>Current Details</p>
                 </div>
                 <div class="cities-grid">
-                    <div class="city-card">
+                    <div class="city-card" id="temp-card">
                         <div class="city-card-header">Temperature</div>
                         <div class="city-card-value" id="city-page-temp">--°</div>
                         <div class="city-card-icon"><i data-lucide="thermometer"></i></div>
                     </div>
-                    <div class="city-card">
+                    <div class="city-card" id="humidity-card">
                         <div class="city-card-header">Humidity</div>
                         <div class="city-card-value" id="city-page-humidity">--%</div>
                         <div class="city-card-icon"><i data-lucide="droplets"></i></div>
                     </div>
-                    <div class="city-card">
+                    <div class="city-card" id="sunrise-card">
                         <div class="city-card-header">Sunrise</div>
                         <div class="city-card-value" id="city-page-sunrise">--:--</div>
                         <div class="city-card-icon"><i data-lucide="sunrise"></i></div>
                     </div>
-                    <div class="city-card">
+                    <div class="city-card" id="sunset-card">
                         <div class="city-card-header">Sunset</div>
                         <div class="city-card-value" id="city-page-sunset">--:--</div>
                         <div class="city-card-icon"><i data-lucide="sunset"></i></div>
@@ -96,6 +96,10 @@
         </main>
     </div>
     <script src="script.js"></script>
+    <div id="sun-overlay"></div>
+    <div id="humidity-overlay"></div>
+    <div id="sunrise-overlay"></div>
+    <div id="sunset-overlay"></div>
 </body>
 
 </html>
