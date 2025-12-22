@@ -1,5 +1,7 @@
 lucide.createIcons();
-const apiKey = "281b784cd67433bfdea3add27756a2cc";
+
+// Backend API URL
+const apiBaseUrl = "http://localhost:3000/api";
 
 window.onload = () => {
     // Initialize icons
@@ -30,7 +32,7 @@ document.getElementById('cityInput').addEventListener('keypress', (e) => {
 
 async function fetchByCity(city) {
     try {
-        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`);
+        const res = await fetch(`${apiBaseUrl}/weather?q=${city}`);
         const data = await res.json();
         if (data.coord) {
             fetchData(data.coord.lat, data.coord.lon);
@@ -45,8 +47,8 @@ async function fetchByCity(city) {
 async function fetchData(lat, lon) {
     try {
         const [curRes, foreRes] = await Promise.all([
-            fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`),
-            fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`)
+            fetch(`${apiBaseUrl}/weather?lat=${lat}&lon=${lon}`),
+            fetch(`${apiBaseUrl}/forecast?lat=${lat}&lon=${lon}`)
         ]);
         const current = await curRes.json();
         const forecast = await foreRes.json();
@@ -73,11 +75,41 @@ function updateUI(current, forecastList) {
     // Update current location display (below search bar)
     updateLocationDisplay(current);
 
+    // Update Cities Page Data
+    updateCitiesPage(current);
+
     // Update hourly forecast (Today's Forecast - next 24 hours)
     updateHourlyForecast(forecastList);
 
     // Update 7-day forecast
     update7DayForecast(forecastList);
+}
+
+function updateCitiesPage(current) {
+    // City Name
+    document.getElementById('city-page-name').textContent = current.name;
+
+    // Temperature
+    document.getElementById('city-page-temp').textContent = Math.round(current.main.temp) + '°';
+
+    // Humidity
+    document.getElementById('city-page-humidity').textContent = current.main.humidity + '%';
+
+    // Sunrise
+    const sunrise = new Date(current.sys.sunrise * 1000);
+    document.getElementById('city-page-sunrise').textContent = sunrise.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+
+    // Sunset
+    const sunset = new Date(current.sys.sunset * 1000);
+    document.getElementById('city-page-sunset').textContent = sunset.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
 }
 
 function updateLocationDisplay(current) {
@@ -89,37 +121,123 @@ function updateLocationDisplay(current) {
     }
 }
 
+// Navigation Logic
+document.getElementById('nav-weather').addEventListener('click', (e) => {
+    e.preventDefault();
+    switchView('weather');
+});
+
+document.getElementById('nav-cities').addEventListener('click', (e) => {
+    e.preventDefault();
+    switchView('cities');
+});
+
+function switchView(viewName) {
+    const weatherView = document.getElementById('weather-view');
+    const citiesView = document.getElementById('cities-view');
+    const navWeather = document.getElementById('nav-weather');
+    const navCities = document.getElementById('nav-cities');
+
+    if (viewName === 'weather') {
+        weatherView.classList.remove('hidden');
+        citiesView.classList.add('hidden');
+        navWeather.classList.add('active');
+        navCities.classList.remove('active');
+    } else {
+        weatherView.classList.add('hidden');
+        citiesView.classList.remove('hidden');
+        navWeather.classList.remove('active');
+        navCities.classList.add('active');
+    }
+}
+
+let hourlyChartInstance = null;
+
 function updateHourlyForecast(forecastList) {
-    const hourlyCont = document.getElementById('hourlyForecast');
-    hourlyCont.innerHTML = '';
+    const ctx = document.getElementById('hourlyChart').getContext('2d');
 
-    // Filter to show only today's forecasts
-    const now = new Date();
-    const todayStr = now.toDateString();
+    // 1. Filter for next 24 hours (or just take first 8-9 items)
+    // We want a nice curve, so next 24h (8 items * 3h = 24h) is good.
+    const hourlyData = forecastList.slice(0, 9);
 
-    const todayData = forecastList.filter(item => {
-        const forecastDate = new Date(item.dt * 1000);
-        return forecastDate.toDateString() === todayStr;
+    // 2. Prepare Data
+    const labels = hourlyData.map(item => {
+        const date = new Date(item.dt * 1000);
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
     });
+    const temps = hourlyData.map(item => Math.round(item.main.temp));
 
-    todayData.forEach(item => {
-        const forecastDate = new Date(item.dt * 1000);
-        const timeDisplay = forecastDate.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            hour12: true
-        });
+    // 3. Destroy old chart if exists
+    if (hourlyChartInstance) {
+        hourlyChartInstance.destroy();
+    }
 
-        const temp = Math.round(item.main.temp);
-        const weatherIcon = getWeatherIcon(item.weather[0].main);
-        const description = item.weather[0].description;
+    // 4. Create Gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, 150);
+    gradient.addColorStop(0, 'rgba(251, 191, 36, 0.5)'); // Yellow-400
+    gradient.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
 
-        hourlyCont.innerHTML += `
-            <div class="hourly-item">
-                <p class="hourly-time">${timeDisplay}</p>
-                <div class="hourly-icon">${weatherIcon}</div>
-                <p class="hourly-temp">${temp}°</p>
-                <p class="hourly-desc">${description}</p>
-            </div>`;
+    // 5. Render Chart
+    Chart.register(ChartDataLabels);
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = 'Inter';
+
+    hourlyChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Temperature',
+                data: temps,
+                borderColor: '#fbbf24', // Amber-400
+                backgroundColor: gradient,
+                borderWidth: 3,
+                tension: 0.4, // Smooth curve
+                fill: true,
+                pointBackgroundColor: '#fbbf24',
+                pointBorderColor: '#1e293b',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                datalabels: {
+                    align: 'top',
+                    anchor: 'end',
+                    color: '#94a3b8', // Gray text
+                    font: {
+                        weight: 'bold',
+                        size: 14
+                    },
+                    formatter: function (value) {
+                        return value + '°';
+                    }
+                }
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    display: true
+                },
+                tooltip: { enabled: false } // Disable tooltip since we have labels
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    border: { display: false }
+                },
+                y: {
+                    display: false, // Hide Y axis
+                    min: Math.min(...temps) - 5, // Add padding for labels
+                    max: Math.max(...temps) + 8
+                }
+            },
+            layout: {
+                padding: { top: 20, bottom: 10, left: 10, right: 10 }
+            }
+        }
     });
 }
 

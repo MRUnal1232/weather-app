@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyCast Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+</head>
+
+<body>
+    <div class="app-shell">
+        <nav class="sidebar">
+            <div class="logo"><i data-lucide="cloud-lightning"></i></div>
+            <div class="nav-links">
+                <a href="#" id="nav-weather" class="active"><i
+                        data-lucide="layout-dashboard"></i><span>Weather</span></a>
+                <a href="#" id="nav-cities"><i data-lucide="map-pin"></i><span>Cities</span></a>
+                <a href="#"><i data-lucide="map"></i><span>Map</span></a>
+                <a href="#"><i data-lucide="settings"></i><span>Settings</span></a>
+            </div>
+        </nav>
+
+        <main class="dashboard">
+            <header class="top-bar">
+                <div class="search-container">
+                    <input type="text" id="cityInput" placeholder="Search for cities...">
+                    <button id="searchBtn"><i data-lucide="search"></i></button>
+                </div>
+                <div class="location-display">
+                    <i data-lucide="map-pin"></i>
+                    <span id="currentLocation">Detecting location...</span>
+                </div>
+            </header>
+
+            <!-- Weather Dashboard View -->
+            <div id="weather-view">
+                <div class="dashboard-grid">
+                    <section class="main-stats">
+                        <div class="city-info">
+                            <h1 id="cityName">Detecting...</h1>
+                            <p id="currentDate">--</p>
+                            <h2 id="mainTemp">--°</h2>
+                        </div>
+                        <div class="weather-icon-large">
+                            <p id="mainDesc">--</p>
+                        </div>
+                    </section>
+
+                    <section class="card hourly-box">
+                        <h3>TODAY'S FORECAST</h3>
+                        <div class="chart-container" style="position: relative; height:180px; width:100%">
+                            <canvas id="hourlyChart"></canvas>
+                        </div>
+                    </section>
+
+                    <section class="card weekly-box">
+                        <h3>7-DAY FORECAST</h3>
+                        <div class="weekly-list" id="weeklyForecast"></div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Cities View (Detailed Stats) -->
+            <div id="cities-view" class="hidden">
+                <div class="cities-header">
+                    <h1 id="city-page-name">--</h1>
+                    <p>Current Details</p>
+                </div>
+                <div class="cities-grid">
+                    <div class="city-card">
+                        <div class="city-card-header">Temperature</div>
+                        <div class="city-card-value" id="city-page-temp">--°</div>
+                        <div class="city-card-icon"><i data-lucide="thermometer"></i></div>
+                    </div>
+                    <div class="city-card">
+                        <div class="city-card-header">Humidity</div>
+                        <div class="city-card-value" id="city-page-humidity">--%</div>
+                        <div class="city-card-icon"><i data-lucide="droplets"></i></div>
+                    </div>
+                    <div class="city-card">
+                        <div class="city-card-header">Sunrise</div>
+                        <div class="city-card-value" id="city-page-sunrise">--:--</div>
+                        <div class="city-card-icon"><i data-lucide="sunrise"></i></div>
+                    </div>
+                    <div class="city-card">
+                        <div class="city-card-header">Sunset</div>
+                        <div class="city-card-value" id="city-page-sunset">--:--</div>
+                        <div class="city-card-icon"><i data-lucide="sunset"></i></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

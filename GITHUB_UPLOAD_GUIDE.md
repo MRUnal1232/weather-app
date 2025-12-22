@@ -58,19 +58,17 @@ git push -u origin main
 
 ## 🔐 Important: Secure Your API Key
 
-Before pushing to GitHub, you should secure your API key:
+We have set up a backend to secure your API key. Here is how it works:
 
-### Option 1: Use Environment Variables (Recommended for production)
-1. Remove the API key from `script.js`
-2. Use a backend service to handle API calls
+1. **API Key in .env**: Your key is stored in the `.env` file.
+2. **Backend Proxy**: The frontend calls your local server (`http://localhost:3000`), which then calls OpenWeatherMap using the key from `.env`.
+3. **Git Ignore**: The `.env` file is in `.gitignore`, so it will **never** be uploaded to GitHub.
 
-### Option 2: Keep as is (For learning/demo purposes)
-- The free OpenWeatherMap API key is okay to expose for small projects
-- Just be aware it's publicly visible
-- You can regenerate it anytime from OpenWeatherMap dashboard
+### When pushing to GitHub:
+- Your API key remains safe on your computer.
+- Other people who clone your repo will need to create their own `.env` file with their own key.
 
-## 📝 Future Updates
-
+### Future Updates
 When you make changes to your code:
 
 ```bash

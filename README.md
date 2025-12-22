@@ -55,49 +55,60 @@ Visit the live demo: [SkyCast Dashboard](#) *(Add your GitHub Pages link here)*
    cd Weather_App
    ```
 
-2. **Get your API key**
-   - Visit [OpenWeatherMap](https://openweathermap.org/api)
-   - Sign up for a free account
-   - Generate an API key
-
-3. **Configure the API key**
-   - Open `script.js`
-   - Replace the API key on line 2:
-     ```javascript
-     const apiKey = "YOUR_API_KEY_HERE";
-     ```
-
-4. **Run the application**
-   - Simply open `index.html` in your web browser
-   - Or use a local server:
-     ```bash
-     # Using Python
-     python -m http.server 8000
-     
-     # Using Node.js
-     npx http-server
-     ```
-   - Navigate to `http://localhost:8000`
-
-## 💻 Usage
-
-1. **Automatic Location**: The app will automatically detect your location on load
-2. **Search for Cities**: Use the search bar to find weather for any city
-3. **View Forecasts**: 
-   - Scroll through today's hourly forecast
-   - Check the 7-day forecast on the right panel
-4. **Hover Effects**: Hover over forecast cards for interactive effects
-
 ## 📁 Project Structure
 
 ```
 Weather_App/
-├── index.html          # Main HTML file
-├── style.css           # Stylesheet
-├── script.js           # JavaScript logic
-├── README.md           # Project documentation
-└── .gitignore         # Git ignore file
+├── frontend/           # Frontend (HTML, CSS, JS)
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+├── backend/            # Backend (Node.js Server)
+│   ├── server.js
+│   ├── package.json
+│   └── .env
+├── README.md           # Documentation
+├── GITHUB_UPLOAD_GUIDE.md
+└── LICENSE
 ```
+
+## 🔧 Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/Weather_App.git
+   cd Weather_App
+   ```
+
+2. **Setup Backend**
+   ```bash
+   cd backend
+   npm install
+   ```
+
+3. **Configure API Key**
+   - Inside `backend/`, create a `.env` file:
+     ```env
+     OPENWEATHER_API_KEY=YOUR_API_KEY_HERE
+     PORT=3000
+     ```
+
+4. **Run the Application**
+
+   **Step 1: Start Backend**
+   ```bash
+   # In the backend directory
+   npm start
+   ```
+
+   **Step 2: Start Frontend**
+   - Open a new terminal.
+   - Go to frontend directory: `cd ../frontend` (or `cd frontend` from root).
+   - Open `index.html` in browser OR run a local server:
+     ```bash
+     python -m http.server 8000
+     ```
+   - Visit `http://localhost:8000`
 
 ## 🎨 Features Breakdown
 
@@ -158,4 +169,4 @@ If you have any questions or issues, please open an issue on GitHub.
 
 ---
 
-Made with ❤️ by [Your Name]
+Made with ❤️ by Mrunal Thamake
