@@ -135,21 +135,23 @@ function updateCitiesPage(current) {
     // Humidity
     document.getElementById('city-page-humidity').textContent = current.main.humidity + '%';
 
-    // Sunrise
+    // Sunrise (UTC)
     const sunrise = new Date(current.sys.sunrise * 1000);
     document.getElementById('city-page-sunrise').textContent = sunrise.toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
-        hour12: true
-    });
+        hour12: true,
+        timeZone: 'UTC'
+    }) + ' UTC';
 
-    // Sunset
+    // Sunset (UTC)
     const sunset = new Date(current.sys.sunset * 1000);
     document.getElementById('city-page-sunset').textContent = sunset.toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
-        hour12: true
-    });
+        hour12: true,
+        timeZone: 'UTC'
+    }) + ' UTC';
 
     // Attach Hover Animation Logic
     attachHoverEffect('temp-card', 'sun-overlay');
@@ -273,11 +275,19 @@ function switchView(viewName) {
     if (viewName === 'weather') {
         weatherView.classList.remove('hidden');
         citiesView.classList.add('hidden');
+        citiesView.classList.remove('cities-view-animated'); // Reset animation
+
         navWeather.classList.add('active');
         navCities.classList.remove('active');
     } else {
         weatherView.classList.add('hidden');
         citiesView.classList.remove('hidden');
+
+        // Trigger Animation (Small timeout to ensure DOM update)
+        setTimeout(() => {
+            citiesView.classList.add('cities-view-animated');
+        }, 10);
+
         navWeather.classList.remove('active');
         navCities.classList.add('active');
 
@@ -303,7 +313,7 @@ function updateHourlyForecast(forecastList) {
     // 2. Prepare Data
     const labels = hourlyData.map(item => {
         const date = new Date(item.dt * 1000);
-        return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true, timeZone: 'UTC' });
     });
     const temps = hourlyData.map(item => Math.round(item.main.temp));
 
