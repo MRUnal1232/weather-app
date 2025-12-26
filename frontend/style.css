@@ -515,3 +515,155 @@ body {
         filter: brightness(1.2);
     }
 }
+
+/* ===========================
+   Nearby Cities Section
+   =========================== */
+
+.nearby-section {
+    margin-top: 40px;
+}
+
+.nearby-section h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.3rem;
+    color: var(--text);
+    margin-bottom: 20px;
+}
+
+.nearby-section h2 i {
+    width: 24px;
+    height: 24px;
+    color: var(--accent);
+}
+
+.nearby-cities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+}
+
+.nearby-city-card {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+    border-radius: 16px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.nearby-city-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), #a78bfa);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.nearby-city-card:hover {
+    transform: translateY(-5px);
+    background: linear-gradient(145deg, rgba(30, 41, 59, 1), rgba(56, 189, 248, 0.1));
+    box-shadow: 0 10px 30px rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.nearby-city-card:hover::before {
+    opacity: 1;
+}
+
+.nearby-city-info {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.nearby-city-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.nearby-city-country {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.nearby-city-weather {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.nearby-city-icon {
+    font-size: 1.8rem;
+}
+
+.nearby-city-temp {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.nearby-city-desc {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin: 0;
+    text-transform: capitalize;
+}
+
+.nearby-loading,
+.nearby-error {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.nearby-error {
+    color: #f87171;
+}
+
+/* Animation for nearby city cards */
+.cities-view-animated .nearby-section h2 {
+    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: 0.5s;
+    opacity: 0;
+}
+
+.cities-view-animated .nearby-city-card {
+    opacity: 0;
+    animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.cities-view-animated .nearby-city-card:nth-child(1) {
+    animation-delay: 0.55s;
+}
+
+.cities-view-animated .nearby-city-card:nth-child(2) {
+    animation-delay: 0.65s;
+}
+
+.cities-view-animated .nearby-city-card:nth-child(3) {
+    animation-delay: 0.75s;
+}
+
+.cities-view-animated .nearby-city-card:nth-child(4) {
+    animation-delay: 0.85s;
+}
+
+.cities-view-animated .nearby-city-card:nth-child(5) {
+    animation-delay: 0.95s;
+}

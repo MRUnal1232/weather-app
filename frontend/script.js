@@ -123,6 +123,11 @@ function updateUI(current, forecastList) {
 
     // Update 7-day forecast
     update7DayForecast(forecastList);
+
+    // Fetch nearby cities based on current location
+    if (current.coord) {
+        fetchNearbyCities(current.coord.lat, current.coord.lon);
+    }
 }
 
 function updateCitiesPage(current) {
@@ -487,4 +492,72 @@ function getWeatherIcon(weatherMain) {
         'Haze': '🌫️'
     };
     return icons[weatherMain] || '🌤️';
+}
+
+// Nearby Cities Functions
+let nearbyCitiesData = null;
+
+async function fetchNearbyCities(lat, lon) {
+    try {
+        const res = await fetch(`${apiBaseUrl}/nearby?lat=${lat}&lon=${lon}&cnt=6`);
+        if (!res.ok) throw new Error('Failed to fetch nearby cities');
+
+        const data = await res.json();
+        nearbyCitiesData = data.list || [];
+        renderNearbyCities(nearbyCitiesData);
+    } catch (error) {
+        console.error('Error fetching nearby cities:', error);
+        document.getElementById('nearbyCitiesGrid').innerHTML =
+            '<div class="nearby-error">Could not load nearby cities</div>';
+    }
+}
+
+function renderNearbyCities(cities) {
+    const container = document.getElementById('nearbyCitiesGrid');
+
+    if (!cities || cities.length === 0) {
+        container.innerHTML = '<div class="nearby-error">No nearby cities found</div>';
+        return;
+    }
+
+    // Filter out the current city (first result is often the same city)
+    const currentCityName = weatherData?.name?.toLowerCase();
+    const filteredCities = cities.filter(city =>
+        city.name.toLowerCase() !== currentCityName
+    ).slice(0, 5);
+
+    container.innerHTML = filteredCities.map(city => {
+        const temp = Math.round(city.main.temp);
+        const weatherMain = city.weather[0]?.main || 'Clear';
+        const weatherDesc = city.weather[0]?.description || '';
+        const icon = getWeatherIcon(weatherMain);
+        const country = city.sys?.country || '';
+
+        return `
+            <div class="nearby-city-card" data-city="${city.name}">
+                <div class="nearby-city-info">
+                    <h3 class="nearby-city-name">${city.name}</h3>
+                    <span class="nearby-city-country">${country}</span>
+                </div>
+                <div class="nearby-city-weather">
+                    <span class="nearby-city-icon">${icon}</span>
+                    <span class="nearby-city-temp">${temp}°</span>
+                </div>
+                <p class="nearby-city-desc">${weatherDesc}</p>
+            </div>
+        `;
+    }).join('');
+
+    // Add click handlers to search for the city
+    container.querySelectorAll('.nearby-city-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const cityName = card.dataset.city;
+            document.getElementById('cityInput').value = cityName;
+            handleSearch(cityName);
+            switchView('weather');
+        });
+    });
+
+    // Reinitialize Lucide icons if needed
+    lucide.createIcons();
 }
