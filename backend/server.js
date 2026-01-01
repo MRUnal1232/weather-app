@@ -12,6 +12,7 @@ const API_KEY = process.env.OPENWEATHER_API_KEY;
 app.use(cors({
     origin: [
         "https://weather-app-lemon-gamma-74.vercel.app",
+        "https://weather-app-one-coral-86.vercel.app",
         "http://localhost:3000",
         "http://localhost:5500",
         "http://127.0.0.1:5500"
