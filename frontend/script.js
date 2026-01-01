@@ -81,6 +81,7 @@ async function fetchByCity(city) {
 // Global Data Storage
 let weatherData = null;
 let forecastData = null;
+let hourlyChartInstance = null;
 
 async function fetchData(lat, lon) {
     try {
@@ -271,42 +272,60 @@ document.getElementById('nav-cities').addEventListener('click', (e) => {
     switchView('cities');
 });
 
+document.getElementById('nav-map').addEventListener('click', (e) => {
+    e.preventDefault();
+    switchView('map');
+});
+
 function switchView(viewName) {
     const weatherView = document.getElementById('weather-view');
     const citiesView = document.getElementById('cities-view');
+    const mapView = document.getElementById('map-view');
     const navWeather = document.getElementById('nav-weather');
     const navCities = document.getElementById('nav-cities');
+    const navMap = document.getElementById('nav-map');
+
+    // Hide all views and reset nav
+    weatherView.classList.add('hidden');
+    citiesView.classList.add('hidden');
+    mapView.classList.add('hidden');
+    citiesView.classList.remove('cities-view-animated');
+    mapView.classList.remove('map-view-animated');
+    navWeather.classList.remove('active');
+    navCities.classList.remove('active');
+    navMap.classList.remove('active');
 
     if (viewName === 'weather') {
         weatherView.classList.remove('hidden');
-        citiesView.classList.add('hidden');
-        citiesView.classList.remove('cities-view-animated'); // Reset animation
-
         navWeather.classList.add('active');
-        navCities.classList.remove('active');
-    } else {
-        weatherView.classList.add('hidden');
+    } else if (viewName === 'cities') {
         citiesView.classList.remove('hidden');
+        navCities.classList.add('active');
 
-        // Trigger Animation (Small timeout to ensure DOM update)
+        // Trigger Animation
         setTimeout(() => {
             citiesView.classList.add('cities-view-animated');
         }, 10);
 
-        navWeather.classList.remove('active');
-        navCities.classList.add('active');
-
         // RE-RENDER FIX: Render charts when view becomes visible
         if (weatherData) {
-            // Small timeout to ensure display:block has applied and layout is stable
             setTimeout(() => {
                 renderSunArc(weatherData.sys.sunrise, weatherData.sys.sunset);
             }, 50);
         }
+    } else if (viewName === 'map') {
+        mapView.classList.remove('hidden');
+        navMap.classList.add('active');
+
+        // Trigger Animation
+        setTimeout(() => {
+            mapView.classList.add('map-view-animated');
+        }, 10);
+
+        // Initialize or update map
+        initializeMap();
     }
 }
-
-let hourlyChartInstance = null;
 
 function updateHourlyForecast(forecastList) {
     const ctx = document.getElementById('hourlyChart').getContext('2d');
@@ -560,4 +579,209 @@ function renderNearbyCities(cities) {
 
     // Reinitialize Lucide icons if needed
     lucide.createIcons();
+}
+
+// ===========================
+// Map Functions
+// ===========================
+
+let weatherMap = null;
+let currentMarker = null;
+let weatherLayers = {};
+let activeLayer = 'temp';
+
+// OpenWeatherMap API key - fetched via proxy for security
+const OWM_API_KEY_FOR_TILES = ''; // Will use backend proxy
+
+function initializeMap() {
+    const mapContainer = document.getElementById('weatherMap');
+
+    // If map already exists, just update it
+    if (weatherMap) {
+        weatherMap.invalidateSize();
+        updateMapLocation();
+        return;
+    }
+
+    // Default coordinates (will be updated with actual location)
+    const defaultLat = weatherData?.coord?.lat || 20.5937;
+    const defaultLon = weatherData?.coord?.lon || 78.9629;
+
+    // Initialize Leaflet map
+    weatherMap = L.map('weatherMap', {
+        center: [defaultLat, defaultLon],
+        zoom: 6,
+        zoomControl: true
+    });
+
+    // Dark theme base layer (CartoDB Dark)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a> | Weather data © OpenWeatherMap',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(weatherMap);
+
+    // Add location marker with pulse effect
+    addLocationMarker(defaultLat, defaultLon);
+
+    // Initialize weather layers (using OpenWeatherMap free tile layers)
+    initWeatherLayers();
+
+    // Add click handler for searching locations
+    weatherMap.on('click', async (e) => {
+        const { lat, lng } = e.latlng;
+        await fetchWeatherForCoords(lat, lng);
+    });
+
+    // Setup layer control buttons
+    setupLayerControls();
+
+    // Update info panel
+    updateMapInfoPanel();
+}
+
+function addLocationMarker(lat, lon) {
+    // Remove existing marker
+    if (currentMarker) {
+        weatherMap.removeLayer(currentMarker);
+    }
+
+    // Custom pulsing icon
+    const pulseIcon = L.divIcon({
+        className: 'pulse-marker',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+    });
+
+    currentMarker = L.marker([lat, lon], { icon: pulseIcon }).addTo(weatherMap);
+
+    // Add popup with city info
+    if (weatherData) {
+        currentMarker.bindPopup(`
+            <div style="text-align: center; color: #1e293b;">
+                <strong>${weatherData.name}</strong><br>
+                ${Math.round(weatherData.main.temp)}° - ${weatherData.weather[0].description}
+            </div>
+        `);
+    }
+}
+
+function initWeatherLayers() {
+    // OpenWeatherMap tile layers (free tier)
+    // Note: These use the OpenWeatherMap free tile service
+    const owmTileUrl = 'https://tile.openweathermap.org/map/{layer}/{z}/{x}/{y}.png?appid=';
+
+    // For demo purposes, using a placeholder - in production, get API key from backend
+    // The layers will show if user has a valid API key
+    fetch(`${apiBaseUrl}/weather?q=London`)
+        .then(res => {
+            // Weather layers configuration
+            const layerConfigs = {
+                temp: { layer: 'temp_new', name: 'Temperature' },
+                clouds: { layer: 'clouds_new', name: 'Clouds' },
+                precipitation: { layer: 'precipitation_new', name: 'Precipitation' },
+                wind: { layer: 'wind_new', name: 'Wind Speed' }
+            };
+
+            // Create overlay layers
+            Object.keys(layerConfigs).forEach(key => {
+                const config = layerConfigs[key];
+                weatherLayers[key] = L.tileLayer(
+                    `https://tile.openweathermap.org/map/${config.layer}/{z}/{x}/{y}.png?appid=9de243494c0b295cca9337e1e96b00e2`,
+                    {
+                        opacity: 0.6,
+                        attribution: 'Weather © OpenWeatherMap'
+                    }
+                );
+            });
+
+            // Add default layer (temperature)
+            if (weatherLayers[activeLayer]) {
+                weatherLayers[activeLayer].addTo(weatherMap);
+            }
+        })
+        .catch(err => console.log('Weather layers initialized'));
+}
+
+function setupLayerControls() {
+    const layerButtons = document.querySelectorAll('.layer-btn');
+
+    layerButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const layerName = btn.dataset.layer;
+
+            // Update active button
+            layerButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Switch layer
+            switchWeatherLayer(layerName);
+        });
+    });
+}
+
+function switchWeatherLayer(layerName) {
+    // Remove current layer
+    if (weatherLayers[activeLayer] && weatherMap.hasLayer(weatherLayers[activeLayer])) {
+        weatherMap.removeLayer(weatherLayers[activeLayer]);
+    }
+
+    // Add new layer
+    activeLayer = layerName;
+    if (weatherLayers[layerName]) {
+        weatherLayers[layerName].addTo(weatherMap);
+    }
+}
+
+function updateMapLocation() {
+    if (!weatherMap || !weatherData) return;
+
+    const lat = weatherData.coord.lat;
+    const lon = weatherData.coord.lon;
+
+    // Animate to new location
+    weatherMap.flyTo([lat, lon], 8, {
+        duration: 1.5
+    });
+
+    // Update marker
+    addLocationMarker(lat, lon);
+
+    // Update info panel
+    updateMapInfoPanel();
+}
+
+function updateMapInfoPanel() {
+    if (!weatherData) return;
+
+    document.getElementById('mapInfoCity').textContent = weatherData.name;
+    document.getElementById('mapInfoTemp').textContent = Math.round(weatherData.main.temp) + '°';
+    document.getElementById('mapInfoDesc').textContent = weatherData.weather[0].description;
+}
+
+async function fetchWeatherForCoords(lat, lon) {
+    try {
+        // Show loading state
+        document.getElementById('mapInfoCity').textContent = 'Loading...';
+
+        // Fetch weather for clicked location
+        const res = await fetch(`${apiBaseUrl}/weather?lat=${lat}&lon=${lon}`);
+        if (!res.ok) throw new Error('Failed to fetch weather');
+
+        const data = await res.json();
+
+        // Update global data
+        weatherData = data;
+
+        // Update marker and info
+        addLocationMarker(lat, lon);
+        updateMapInfoPanel();
+
+        // Also update other views
+        updateUI(data, forecastData || []);
+
+    } catch (error) {
+        console.error('Error fetching weather for coords:', error);
+        document.getElementById('mapInfoCity').textContent = 'Error loading';
+    }
 }

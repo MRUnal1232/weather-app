@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -9,6 +10,9 @@ const API_KEY = process.env.OPENWEATHER_API_KEY;
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the frontend folder
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Main weather endpoint
 app.get('/api/weather', async (req, res) => {

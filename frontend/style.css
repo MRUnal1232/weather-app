@@ -667,3 +667,200 @@ body {
 .cities-view-animated .nearby-city-card:nth-child(5) {
     animation-delay: 0.95s;
 }
+
+/* ===========================
+   Maps Page Styles
+   =========================== */
+
+.map-container {
+    position: relative;
+    height: calc(100vh - 140px);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+#weatherMap {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    z-index: 1;
+}
+
+/* Layer Controls */
+.map-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: rgba(30, 41, 59, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.map-controls h4 {
+    margin: 0 0 15px 0;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.layer-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.layer-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+}
+
+.layer-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+.layer-btn:hover {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.3);
+    color: var(--text);
+}
+
+.layer-btn.active {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(139, 92, 246, 0.2));
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+}
+
+.layer-btn.active i {
+    color: var(--accent);
+}
+
+/* Map Info Panel */
+.map-info-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    background: rgba(30, 41, 59, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 20px 25px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 180px;
+}
+
+.map-info-city {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 5px;
+}
+
+.map-info-temp {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.map-info-desc {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    text-transform: capitalize;
+}
+
+/* Custom Leaflet Marker */
+.leaflet-marker-icon.pulse-marker {
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7);
+    animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+    0% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 20px rgba(56, 189, 248, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+    }
+}
+
+/* Override Leaflet default styles for dark theme */
+.leaflet-container {
+    background: var(--bg);
+    font-family: 'Inter', sans-serif;
+}
+
+.leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+.leaflet-control-zoom a {
+    background: rgba(30, 41, 59, 0.9) !important;
+    color: var(--text) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(8px);
+}
+
+.leaflet-control-zoom a:hover {
+    background: rgba(56, 189, 248, 0.2) !important;
+    color: var(--accent) !important;
+}
+
+.leaflet-control-attribution {
+    background: rgba(30, 41, 59, 0.7) !important;
+    color: #64748b !important;
+    font-size: 10px;
+}
+
+.leaflet-control-attribution a {
+    color: var(--accent) !important;
+}
+
+/* Map View Animation */
+#map-view.map-view-animated .map-controls {
+    animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+#map-view.map-view-animated .map-info-panel {
+    animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: 0.2s;
+    opacity: 0;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

@@ -9,6 +9,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <!-- Leaflet.js for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 
 <body>
@@ -19,7 +22,7 @@
                 <a href="#" id="nav-weather" class="active"><i
                         data-lucide="layout-dashboard"></i><span>Weather</span></a>
                 <a href="#" id="nav-cities"><i data-lucide="map-pin"></i><span>Cities</span></a>
-                <a href="#"><i data-lucide="map"></i><span>Map</span></a>
+                <a href="#" id="nav-map"><i data-lucide="map"></i><span>Map</span></a>
                 <a href="#"><i data-lucide="settings"></i><span>Settings</span></a>
             </div>
         </nav>
@@ -98,6 +101,43 @@
                     <h2><i data-lucide="navigation"></i> Nearby Cities</h2>
                     <div class="nearby-cities-grid" id="nearbyCitiesGrid">
                         <div class="nearby-loading">Loading nearby cities...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map View -->
+            <div id="map-view" class="hidden">
+                <div class="map-container">
+                    <div id="weatherMap"></div>
+
+                    <!-- Layer Controls -->
+                    <div class="map-controls">
+                        <h4>Weather Layers</h4>
+                        <div class="layer-buttons">
+                            <button class="layer-btn active" data-layer="temp">
+                                <i data-lucide="thermometer"></i>
+                                <span>Temperature</span>
+                            </button>
+                            <button class="layer-btn" data-layer="clouds">
+                                <i data-lucide="cloud"></i>
+                                <span>Clouds</span>
+                            </button>
+                            <button class="layer-btn" data-layer="precipitation">
+                                <i data-lucide="cloud-rain"></i>
+                                <span>Rain</span>
+                            </button>
+                            <button class="layer-btn" data-layer="wind">
+                                <i data-lucide="wind"></i>
+                                <span>Wind</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Location Info Panel -->
+                    <div class="map-info-panel">
+                        <div class="map-info-city" id="mapInfoCity">--</div>
+                        <div class="map-info-temp" id="mapInfoTemp">--°</div>
+                        <div class="map-info-desc" id="mapInfoDesc">--</div>
                     </div>
                 </div>
             </div>
