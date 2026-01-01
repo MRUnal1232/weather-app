@@ -1,0 +1,27 @@
+# Deploy Backend to Render
+# ========================
+# WHAT THIS DOES: Automatically deploys backend when you push to main
+# PURPOSE: Your API goes live without manual work!
+
+name: Deploy Backend to Render
+
+# WHEN TO RUN: Only when pushing to main branch
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'  # Only run if backend files changed
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to Render
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🔔 Trigger Render Deploy
+        run: |
+          # This calls Render's deploy hook to start deployment
+          # You'll add your deploy hook URL as a secret in GitHub
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+        # NOTE: If no hook is set, this step will be skipped
+        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}

@@ -1,0 +1,18 @@
+# Render Configuration for Backend
+# =================================
+# WHAT THIS IS: Tells Render how to run your backend
+# PURPOSE: Auto-configures the deployment
+
+services:
+  - type: web
+    name: weather-app-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENWEATHER_API_KEY
+        sync: false  # You'll set this manually in Render dashboard

@@ -1,0 +1,63 @@
+# CI/CD Pipeline - Continuous Integration
+# ========================================
+# WHAT THIS DOES: Runs automatically when you push code or create a PR
+# PURPOSE: Checks if your code is good before deploying
+
+name: CI - Build & Lint
+
+# WHEN TO RUN: On every push and pull request
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # JOB 1: Check the Backend Code
+  backend-check:
+    name: 🔧 Backend - Install & Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Download your code to the GitHub server
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      # Step 2: Setup Node.js (same version as your computer)
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      
+      # Step 3: Install all packages (express, axios, etc.)
+      - name: 📚 Install Dependencies
+        run: npm install
+        working-directory: ./backend
+      
+      # Step 4: Run ESLint to check code quality
+      - name: 🔍 Run ESLint
+        run: npm run lint
+        working-directory: ./backend
+
+  # JOB 2: Check the Frontend Code  
+  frontend-check:
+    name: 🎨 Frontend - Lint JavaScript
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      # Install ESLint globally and check frontend JS
+      - name: 🔍 Lint Frontend JavaScript
+        run: |
+          npm install -g eslint
+          eslint script.js --no-eslintrc --env browser,es2021 --parser-options ecmaVersion:2021 || true
+        working-directory: ./frontend
