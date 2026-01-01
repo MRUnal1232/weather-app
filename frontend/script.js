@@ -1,7 +1,7 @@
 lucide.createIcons();
 
-// Backend API URL
-const apiBaseUrl = "http://localhost:3000/api";
+// Backend API URL - loaded from config.js
+const apiBaseUrl = window.CONFIG?.API_BASE_URL || "http://localhost:3000/api";
 
 window.onload = () => {
     // Initialize icons
