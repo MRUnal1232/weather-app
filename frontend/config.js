@@ -4,7 +4,7 @@
 // For production: Using Render backend URL
 
 const CONFIG = {
-    API_BASE_URL: "https://weather-app-dunm.onrender.com/api"
+    API_BASE_URL: "https://weather-app-backend-x0dz.onrender.com/api"
 };
 
 // Make it available globally
