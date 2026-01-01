@@ -8,7 +8,21 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.OPENWEATHER_API_KEY;
 
-app.use(cors());
+// CORS Configuration - Allow your Vercel frontend
+app.use(cors({
+    origin: [
+        "https://weather-app-lemon-gamma-74.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500"
+    ],
+    methods: ["GET", "POST", "OPTIONS"],
+    credentials: true
+}));
+
+// Handle preflight requests
+app.options("*", cors());
+
 app.use(express.json());
 
 // Serve static files from the frontend folder
