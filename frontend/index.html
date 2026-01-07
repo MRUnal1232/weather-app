@@ -221,6 +221,138 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Settings View -->
+            <div id="settings-view" class="hidden">
+                <div class="settings-container">
+                    <!-- Settings Header -->
+                    <div class="settings-header">
+                        <h1><i data-lucide="settings"></i> Settings</h1>
+                        <p>Customize your weather app experience</p>
+                    </div>
+
+                    <!-- Settings Cards -->
+                    <div class="settings-grid">
+                        <!-- Temperature Unit Card -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <div class="settings-card-title">
+                                    <i data-lucide="thermometer"></i>
+                                    <div>
+                                        <h3>Temperature Unit</h3>
+                                        <p>Choose your preferred temperature scale</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="settings-card-content">
+                                <div class="toggle-group">
+                                    <button class="toggle-option active" id="celsius-btn" data-unit="celsius">
+                                        <span>Celsius</span>
+                                        <span class="unit-symbol">°C</span>
+                                    </button>
+                                    <button class="toggle-option" id="fahrenheit-btn" data-unit="fahrenheit">
+                                        <span>Fahrenheit</span>
+                                        <span class="unit-symbol">°F</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Theme Card -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <div class="settings-card-title">
+                                    <i data-lucide="palette"></i>
+                                    <div>
+                                        <h3>Theme</h3>
+                                        <p>Switch between light and dark mode</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="settings-card-content">
+                                <div class="toggle-group">
+                                    <button class="toggle-option active" id="dark-theme-btn" data-theme="dark">
+                                        <i data-lucide="moon"></i>
+                                        <span>Dark</span>
+                                    </button>
+                                    <button class="toggle-option" id="light-theme-btn" data-theme="light">
+                                        <i data-lucide="sun"></i>
+                                        <span>Light</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Default Location Card -->
+                        <div class="settings-card settings-card-wide">
+                            <div class="settings-card-header">
+                                <div class="settings-card-title">
+                                    <i data-lucide="map-pin"></i>
+                                    <div>
+                                        <h3>Default Location</h3>
+                                        <p>Set a city to load automatically on startup</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="settings-card-content">
+                                <div class="location-input-group">
+                                    <input type="text" id="defaultLocationInput"
+                                        placeholder="Enter city name (e.g., London, New York)" class="location-input">
+                                    <button id="setDefaultLocationBtn" class="set-location-btn">
+                                        <i data-lucide="check"></i>
+                                        Set Location
+                                    </button>
+                                </div>
+                                <div id="currentDefaultLocation" class="current-location-display">
+                                    <i data-lucide="info"></i>
+                                    <span>No default location set. Using auto-detection.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- About Card -->
+                        <div class="settings-card settings-card-wide">
+                            <div class="settings-card-header">
+                                <div class="settings-card-title">
+                                    <i data-lucide="info"></i>
+                                    <div>
+                                        <h3>About</h3>
+                                        <p>App information and credits</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="settings-card-content">
+                                <div class="about-content">
+                                    <div class="about-item">
+                                        <span class="about-label">App Name:</span>
+                                        <span class="about-value">SkyCast Dashboard</span>
+                                    </div>
+                                    <div class="about-item">
+                                        <span class="about-label">Version:</span>
+                                        <span class="about-value">1.0.0</span>
+                                    </div>
+                                    <div class="about-item">
+                                        <span class="about-label">Weather Data:</span>
+                                        <span class="about-value">OpenWeatherMap API</span>
+                                    </div>
+                                    <div class="about-item">
+                                        <span class="about-label">Icons:</span>
+                                        <span class="about-value">Lucide Icons</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="settings-actions">
+                        <button id="resetSettingsBtn" class="reset-btn">
+                            <i data-lucide="rotate-ccw"></i>
+                            Reset to Defaults
+                        </button>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
     <script src="script.js"></script>

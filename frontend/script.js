@@ -7,13 +7,24 @@ window.onload = () => {
     // Initialize icons
     lucide.createIcons();
 
-    // Get user's current location
-    navigator.geolocation.getCurrentPosition(pos => {
-        fetchData(pos.coords.latitude, pos.coords.longitude);
-    }, (error) => {
-        console.error("Geolocation error:", error);
-        fetchByCity("London");
-    });
+    // Load settings from localStorage
+    loadSettings();
+
+    // Check for default location setting
+    const defaultLocation = appSettings.defaultLocation;
+
+    if (defaultLocation) {
+        // Use default location
+        fetchByCity(defaultLocation);
+    } else {
+        // Get user's current location
+        navigator.geolocation.getCurrentPosition(pos => {
+            fetchData(pos.coords.latitude, pos.coords.longitude);
+        }, (error) => {
+            console.error("Geolocation error:", error);
+            fetchByCity("London");
+        });
+    }
 };
 
 // Search functionality
@@ -105,7 +116,7 @@ async function fetchData(lat, lon) {
 function updateUI(current, forecastList) {
     // Update main city info
     document.getElementById('cityName').textContent = current.name;
-    document.getElementById('mainTemp').textContent = `${Math.round(current.main.temp)}°`;
+    document.getElementById('mainTemp').textContent = `${formatTemperature(current.main.temp)}${getTemperatureSymbol()}`;
     document.getElementById('mainDesc').textContent = current.weather[0].description;
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
         weekday: 'long',
@@ -136,7 +147,7 @@ function updateCitiesPage(current) {
     document.getElementById('city-page-name').textContent = current.name;
 
     // Temperature
-    document.getElementById('city-page-temp').textContent = Math.round(current.main.temp) + '°';
+    document.getElementById('city-page-temp').textContent = formatTemperature(current.main.temp) + getTemperatureSymbol();
 
     // Humidity
     document.getElementById('city-page-humidity').textContent = current.main.humidity + '%';
@@ -1079,3 +1090,300 @@ function showDayDetail(date, weatherInfo) {
     // Reinitialize icons
     lucide.createIcons();
 }
+
+// ===========================
+// Settings Management
+// ===========================
+
+// Default settings
+const defaultSettings = {
+    temperatureUnit: 'celsius',
+    theme: 'dark',
+    defaultLocation: null
+};
+
+// App settings (loaded from localStorage)
+let appSettings = { ...defaultSettings };
+
+// Load settings from localStorage
+function loadSettings() {
+    const saved = localStorage.getItem('weatherAppSettings');
+    if (saved) {
+        try {
+            appSettings = { ...defaultSettings, ...JSON.parse(saved) };
+        } catch (e) {
+            console.error('Error loading settings:', e);
+            appSettings = { ...defaultSettings };
+        }
+    }
+
+    // Apply settings
+    applySettings();
+}
+
+// Save settings to localStorage
+function saveSettings() {
+    localStorage.setItem('weatherAppSettings', JSON.stringify(appSettings));
+}
+
+// Apply settings to the app
+function applySettings() {
+    // Apply theme
+    if (appSettings.theme === 'light') {
+        document.body.classList.add('light-theme');
+    } else {
+        document.body.classList.remove('light-theme');
+    }
+
+    // Update UI to reflect current settings
+    updateSettingsUI();
+}
+
+// Update settings UI to match current settings
+function updateSettingsUI() {
+    // Temperature unit buttons
+    document.querySelectorAll('.toggle-option[data-unit]').forEach(btn => {
+        if (btn.dataset.unit === appSettings.temperatureUnit) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Theme buttons
+    document.querySelectorAll('.toggle-option[data-theme]').forEach(btn => {
+        if (btn.dataset.theme === appSettings.theme) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Default location display
+    const locationDisplay = document.getElementById('currentDefaultLocation');
+    const locationSpan = locationDisplay.querySelector('span');
+
+    if (appSettings.defaultLocation) {
+        locationDisplay.classList.add('has-location');
+        locationSpan.textContent = `Default location: ${appSettings.defaultLocation}`;
+    } else {
+        locationDisplay.classList.remove('has-location');
+        locationSpan.textContent = 'No default location set. Using auto-detection.';
+    }
+}
+
+// Temperature conversion
+function celsiusToFahrenheit(celsius) {
+    return (celsius * 9 / 5) + 32;
+}
+
+function fahrenheitToCelsius(fahrenheit) {
+    return (fahrenheit - 32) * 5 / 9;
+}
+
+function formatTemperature(temp) {
+    if (appSettings.temperatureUnit === 'fahrenheit') {
+        return Math.round(celsiusToFahrenheit(temp));
+    }
+    return Math.round(temp);
+}
+
+function getTemperatureSymbol() {
+    return appSettings.temperatureUnit === 'fahrenheit' ? '°F' : '°C';
+}
+
+// Settings Navigation
+document.getElementById('nav-weather').addEventListener('click', (e) => {
+    e.preventDefault();
+    switchView('weather');
+});
+
+document.getElementById('nav-cities').addEventListener('click', (e) => {
+    e.preventDefault();
+    switchView('cities');
+});
+
+document.getElementById('nav-map').addEventListener('click', (e) => {
+    e.preventDefault();
+    switchView('map');
+});
+
+document.getElementById('nav-calendar').addEventListener('click', (e) => {
+    e.preventDefault();
+    switchView('calendar');
+});
+
+// Settings link - find the settings link
+const settingsLinks = document.querySelectorAll('.nav-links a');
+settingsLinks.forEach(link => {
+    if (link.querySelector('[data-lucide="settings"]')) {
+        link.id = 'nav-settings';
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchView('settings');
+        });
+    }
+});
+
+function switchView(viewName) {
+    const weatherView = document.getElementById('weather-view');
+    const citiesView = document.getElementById('cities-view');
+    const mapView = document.getElementById('map-view');
+    const calendarView = document.getElementById('calendar-view');
+    const settingsView = document.getElementById('settings-view');
+    const navWeather = document.getElementById('nav-weather');
+    const navCities = document.getElementById('nav-cities');
+    const navMap = document.getElementById('nav-map');
+    const navCalendar = document.getElementById('nav-calendar');
+    const navSettings = document.getElementById('nav-settings');
+
+    // Hide all views and reset nav
+    weatherView.classList.add('hidden');
+    citiesView.classList.add('hidden');
+    mapView.classList.add('hidden');
+    calendarView.classList.add('hidden');
+    settingsView.classList.add('hidden');
+    citiesView.classList.remove('cities-view-animated');
+    mapView.classList.remove('map-view-animated');
+    calendarView.classList.remove('calendar-view-animated');
+    settingsView.classList.remove('settings-view-animated');
+    navWeather.classList.remove('active');
+    navCities.classList.remove('active');
+    navMap.classList.remove('active');
+    navCalendar.classList.remove('active');
+    if (navSettings) navSettings.classList.remove('active');
+
+    if (viewName === 'weather') {
+        weatherView.classList.remove('hidden');
+        navWeather.classList.add('active');
+    } else if (viewName === 'cities') {
+        citiesView.classList.remove('hidden');
+        navCities.classList.add('active');
+
+        // Trigger Animation
+        setTimeout(() => {
+            citiesView.classList.add('cities-view-animated');
+        }, 10);
+
+        // RE-RENDER FIX: Render charts when view becomes visible
+        if (weatherData) {
+            setTimeout(() => {
+                renderSunArc(weatherData.sys.sunrise, weatherData.sys.sunset);
+            }, 50);
+        }
+    } else if (viewName === 'map') {
+        mapView.classList.remove('hidden');
+        navMap.classList.add('active');
+
+        // Trigger Animation
+        setTimeout(() => {
+            mapView.classList.add('map-view-animated');
+        }, 10);
+
+        // Initialize or update map
+        initializeMap();
+    } else if (viewName === 'calendar') {
+        calendarView.classList.remove('hidden');
+        navCalendar.classList.add('active');
+
+        // Trigger Animation
+        setTimeout(() => {
+            calendarView.classList.add('calendar-view-animated');
+        }, 10);
+
+        // Initialize calendar
+        initializeCalendar();
+    } else if (viewName === 'settings') {
+        settingsView.classList.remove('hidden');
+        if (navSettings) navSettings.classList.add('active');
+
+        // Trigger Animation
+        setTimeout(() => {
+            settingsView.classList.add('settings-view-animated');
+        }, 10);
+
+        // Update settings UI
+        updateSettingsUI();
+        lucide.createIcons();
+    }
+}
+
+// Temperature Unit Toggle
+document.getElementById('celsius-btn').addEventListener('click', () => {
+    appSettings.temperatureUnit = 'celsius';
+    saveSettings();
+    updateSettingsUI();
+
+    // Refresh weather data to update all temperatures
+    if (weatherData && forecastData) {
+        updateUI(weatherData, forecastData);
+    }
+});
+
+document.getElementById('fahrenheit-btn').addEventListener('click', () => {
+    appSettings.temperatureUnit = 'fahrenheit';
+    saveSettings();
+    updateSettingsUI();
+
+    // Refresh weather data to update all temperatures
+    if (weatherData && forecastData) {
+        updateUI(weatherData, forecastData);
+    }
+});
+
+// Theme Toggle
+document.getElementById('dark-theme-btn').addEventListener('click', () => {
+    appSettings.theme = 'dark';
+    saveSettings();
+    applySettings();
+});
+
+document.getElementById('light-theme-btn').addEventListener('click', () => {
+    appSettings.theme = 'light';
+    saveSettings();
+    applySettings();
+});
+
+// Default Location Setting
+document.getElementById('setDefaultLocationBtn').addEventListener('click', async () => {
+    const input = document.getElementById('defaultLocationInput');
+    const city = input.value.trim();
+
+    if (!city) {
+        alert('Please enter a city name');
+        return;
+    }
+
+    // Verify the city exists by trying to fetch weather
+    try {
+        const res = await fetch(`${apiBaseUrl}/weather?q=${city}`);
+        if (!res.ok) throw new Error('City not found');
+
+        const data = await res.json();
+
+        // Save the city name
+        appSettings.defaultLocation = data.name; // Use the official name from API
+        saveSettings();
+        updateSettingsUI();
+
+        // Clear input
+        input.value = '';
+
+        // Show success message
+        alert(`Default location set to ${data.name}`);
+    } catch (error) {
+        alert('City not found. Please check the spelling and try again.');
+    }
+});
+
+// Reset Settings
+document.getElementById('resetSettingsBtn').addEventListener('click', () => {
+    if (confirm('Are you sure you want to reset all settings to defaults?')) {
+        appSettings = { ...defaultSettings };
+        saveSettings();
+        applySettings();
+
+        // Reload the page to apply all changes
+        location.reload();
+    }
+});
