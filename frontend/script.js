@@ -785,3 +785,297 @@ async function fetchWeatherForCoords(lat, lon) {
         document.getElementById('mapInfoCity').textContent = 'Error loading';
     }
 }
+
+// ===========================
+// Calendar Functions
+// ===========================
+
+let currentCalendarDate = new Date();
+let calendarForecastData = null;
+
+// Calendar navigation
+document.getElementById('nav-calendar').addEventListener('click', (e) => {
+    e.preventDefault();
+    switchView('calendar');
+});
+
+function switchView(viewName) {
+    const weatherView = document.getElementById('weather-view');
+    const citiesView = document.getElementById('cities-view');
+    const mapView = document.getElementById('map-view');
+    const calendarView = document.getElementById('calendar-view');
+    const navWeather = document.getElementById('nav-weather');
+    const navCities = document.getElementById('nav-cities');
+    const navMap = document.getElementById('nav-map');
+    const navCalendar = document.getElementById('nav-calendar');
+
+    // Hide all views and reset nav
+    weatherView.classList.add('hidden');
+    citiesView.classList.add('hidden');
+    mapView.classList.add('hidden');
+    calendarView.classList.add('hidden');
+    citiesView.classList.remove('cities-view-animated');
+    mapView.classList.remove('map-view-animated');
+    calendarView.classList.remove('calendar-view-animated');
+    navWeather.classList.remove('active');
+    navCities.classList.remove('active');
+    navMap.classList.remove('active');
+    navCalendar.classList.remove('active');
+
+    if (viewName === 'weather') {
+        weatherView.classList.remove('hidden');
+        navWeather.classList.add('active');
+    } else if (viewName === 'cities') {
+        citiesView.classList.remove('hidden');
+        navCities.classList.add('active');
+
+        // Trigger Animation
+        setTimeout(() => {
+            citiesView.classList.add('cities-view-animated');
+        }, 10);
+
+        // RE-RENDER FIX: Render charts when view becomes visible
+        if (weatherData) {
+            setTimeout(() => {
+                renderSunArc(weatherData.sys.sunrise, weatherData.sys.sunset);
+            }, 50);
+        }
+    } else if (viewName === 'map') {
+        mapView.classList.remove('hidden');
+        navMap.classList.add('active');
+
+        // Trigger Animation
+        setTimeout(() => {
+            mapView.classList.add('map-view-animated');
+        }, 10);
+
+        // Initialize or update map
+        initializeMap();
+    } else if (viewName === 'calendar') {
+        calendarView.classList.remove('hidden');
+        navCalendar.classList.add('active');
+
+        // Trigger Animation
+        setTimeout(() => {
+            calendarView.classList.add('calendar-view-animated');
+        }, 10);
+
+        // Initialize calendar
+        initializeCalendar();
+    }
+}
+
+function initializeCalendar() {
+    // Update location display
+    if (weatherData) {
+        document.getElementById('calendarLocation').textContent = weatherData.name;
+    }
+
+    // Reset to current month
+    currentCalendarDate = new Date();
+
+    // Generate calendar
+    generateCalendar();
+
+    // Setup navigation
+    document.getElementById('prevMonth').addEventListener('click', () => {
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+        generateCalendar();
+    });
+
+    document.getElementById('nextMonth').addEventListener('click', () => {
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+        generateCalendar();
+    });
+
+    // Setup detail panel close button
+    document.getElementById('closeDetailPanel').addEventListener('click', () => {
+        document.getElementById('calendarDetailPanel').classList.add('hidden');
+        // Remove selected class from all days
+        document.querySelectorAll('.calendar-day').forEach(day => {
+            day.classList.remove('selected');
+        });
+    });
+}
+
+function generateCalendar() {
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+
+    // Update header
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+    document.getElementById('calendarMonthYear').textContent = `${monthNames[month]} ${year}`;
+
+    // Get first day of month and number of days
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    const calendarDays = document.getElementById('calendarDays');
+    calendarDays.innerHTML = '';
+
+    const today = new Date();
+    const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+
+    // Add previous month's days
+    for (let i = firstDay - 1; i >= 0; i--) {
+        const day = daysInPrevMonth - i;
+        const dayElement = createDayElement(day, true, new Date(year, month - 1, day));
+        calendarDays.appendChild(dayElement);
+    }
+
+    // Add current month's days
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const isToday = isCurrentMonth && day === today.getDate();
+        const dayElement = createDayElement(day, false, date, isToday);
+        calendarDays.appendChild(dayElement);
+    }
+
+    // Add next month's days to fill the grid
+    const totalCells = calendarDays.children.length;
+    const remainingCells = 42 - totalCells; // 6 rows * 7 days
+    for (let day = 1; day <= remainingCells; day++) {
+        const dayElement = createDayElement(day, true, new Date(year, month + 1, day));
+        calendarDays.appendChild(dayElement);
+    }
+
+    // Reinitialize icons
+    lucide.createIcons();
+}
+
+function createDayElement(dayNumber, isOtherMonth, date, isToday = false) {
+    const dayDiv = document.createElement('div');
+    dayDiv.className = 'calendar-day';
+    if (isOtherMonth) dayDiv.classList.add('other-month');
+    if (isToday) dayDiv.classList.add('today');
+
+    // Day number
+    const dayNum = document.createElement('div');
+    dayNum.className = 'day-number';
+    dayNum.textContent = dayNumber;
+    dayDiv.appendChild(dayNum);
+
+    // Get weather data for this date
+    const weatherInfo = getWeatherForDate(date);
+
+    if (weatherInfo && !isOtherMonth) {
+        // Weather icon
+        const icon = document.createElement('div');
+        icon.className = 'day-weather-icon';
+        icon.textContent = getWeatherIcon(weatherInfo.weather);
+        dayDiv.appendChild(icon);
+
+        // Temperature
+        const temp = document.createElement('div');
+        temp.className = 'day-temp';
+        temp.innerHTML = `
+            <div class="day-temp-high">${Math.round(weatherInfo.tempMax)}°</div>
+            <div class="day-temp-low">${Math.round(weatherInfo.tempMin)}°</div>
+        `;
+        dayDiv.appendChild(temp);
+
+        // Add click handler for detail view
+        if (!isOtherMonth) {
+            dayDiv.addEventListener('click', () => {
+                showDayDetail(date, weatherInfo);
+                // Remove selected from all days
+                document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+                dayDiv.classList.add('selected');
+            });
+        }
+    } else if (!isOtherMonth) {
+        // No data available
+        const noData = document.createElement('div');
+        noData.className = 'day-no-data';
+        noData.textContent = 'No data';
+        dayDiv.appendChild(noData);
+    }
+
+    return dayDiv;
+}
+
+function getWeatherForDate(date) {
+    if (!forecastData || forecastData.length === 0) return null;
+
+    const targetDate = new Date(date);
+    targetDate.setHours(12, 0, 0, 0); // Noon for comparison
+
+    // Find forecast items for this date
+    const dayForecasts = forecastData.filter(item => {
+        const itemDate = new Date(item.dt * 1000);
+        return itemDate.toDateString() === targetDate.toDateString();
+    });
+
+    if (dayForecasts.length === 0) {
+        // Try to find closest available data
+        const now = new Date();
+        const diffDays = Math.floor((targetDate - now) / (1000 * 60 * 60 * 24));
+
+        // Only show data for dates within forecast range (5 days)
+        if (diffDays >= 0 && diffDays < 5 && forecastData.length > 0) {
+            // Use average of available data
+            const temps = forecastData.map(f => f.main.temp);
+            const weatherTypes = forecastData.map(f => f.weather[0].main);
+            const mostCommonWeather = weatherTypes.sort((a, b) =>
+                weatherTypes.filter(v => v === a).length - weatherTypes.filter(v => v === b).length
+            ).pop();
+
+            return {
+                tempMax: Math.max(...temps),
+                tempMin: Math.min(...temps),
+                weather: mostCommonWeather,
+                description: forecastData[0].weather[0].description,
+                humidity: forecastData[0].main.humidity,
+                windSpeed: forecastData[0].wind.speed
+            };
+        }
+        return null;
+    }
+
+    // Calculate max/min temps for the day
+    const temps = dayForecasts.map(f => f.main.temp);
+    const tempMax = Math.max(...temps);
+    const tempMin = Math.min(...temps);
+
+    // Use the midday forecast for weather type
+    const middayForecast = dayForecasts[Math.floor(dayForecasts.length / 2)] || dayForecasts[0];
+
+    return {
+        tempMax,
+        tempMin,
+        weather: middayForecast.weather[0].main,
+        description: middayForecast.weather[0].description,
+        humidity: middayForecast.main.humidity,
+        windSpeed: middayForecast.wind.speed
+    };
+}
+
+function showDayDetail(date, weatherInfo) {
+    const panel = document.getElementById('calendarDetailPanel');
+
+    // Format date
+    const dateStr = date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    });
+
+    // Update panel content
+    document.getElementById('detailDate').textContent = dateStr;
+    document.getElementById('detailWeatherIcon').textContent = getWeatherIcon(weatherInfo.weather);
+    document.getElementById('detailTemp').textContent = `${Math.round((weatherInfo.tempMax + weatherInfo.tempMin) / 2)}°`;
+    document.getElementById('detailDesc').textContent = weatherInfo.description;
+    document.getElementById('detailTempMax').textContent = `${Math.round(weatherInfo.tempMax)}°`;
+    document.getElementById('detailTempMin').textContent = `${Math.round(weatherInfo.tempMin)}°`;
+    document.getElementById('detailHumidity').textContent = `${weatherInfo.humidity}%`;
+    document.getElementById('detailWind').textContent = `${Math.round(weatherInfo.windSpeed * 3.6)} km/h`;
+
+    // Show panel
+    panel.classList.remove('hidden');
+
+    // Reinitialize icons
+    lucide.createIcons();
+}
