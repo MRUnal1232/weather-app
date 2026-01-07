@@ -8,15 +8,28 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.OPENWEATHER_API_KEY;
 
-// CORS Configuration - Allow your Vercel frontend
+// CORS Configuration - Allow your Vercel frontend (all deployments)
 app.use(cors({
-    origin: [
-        "https://weather-app-lemon-gamma-74.vercel.app",
-        "https://weather-app-one-coral-86.vercel.app",
-        "http://localhost:3000",
-        "http://localhost:5500",
-        "http://127.0.0.1:5500"
-    ],
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
+        if (!origin) return callback(null, true);
+
+        // List of allowed origin patterns
+        const allowedPatterns = [
+            /^https:\/\/weather-app.*\.vercel\.app$/,  // All Vercel deployments
+            /^http:\/\/localhost:\d+$/,                 // Any localhost port
+            /^http:\/\/127\.0\.0\.1:\d+$/              // Any 127.0.0.1 port
+        ];
+
+        // Check if origin matches any pattern
+        const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
+
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ["GET", "POST", "OPTIONS"],
     credentials: true
 }));
